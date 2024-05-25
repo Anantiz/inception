@@ -1,0 +1,33 @@
+FROM alpine:3.18
+
+EXPOSE 9000
+
+### Get the latest packages
+RUN apk update && apk upgrade
+RUN apk add --no-cache bash
+
+RUN apk add --no-cache php-phar mariadb-client php81-common php81-iconv php81-json php81-gd php81-curl php81-xml \
+php81-mysqli php81-imap php81-cgi fcgi php81-pdo php81-pdo_mysql php81-soap php81-opcache \
+php81-posix php81-gettext php81-ldap php81-ctype php81-dom php81 php81-fpm
+
+RUN apk add --no-cache wget
+RUN apk add --no-cache openrc
+
+RUN openrc
+RUN touch /run/openrc/softlevel
+
+COPY conf/www.conf /etc/php81/php-fpm.d/www.conf
+
+### Install WordPress CLI
+RUN wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && chmod +x wp-cli.phar && mv wp-cli.phar /usr/bin/wp-cli
+RUN adduser -D -G 'www-data' "www-data"
+
+RUN mkdir -p /var/www/wordpress
+
+COPY ./tools/setup.sh /setup.sh
+RUN chmod +x /setup.sh
+
+RUN chown -R www-data:www-data /var/www && chmod 760 /var/www
+RUN chown -R www-data:www-data /var/log/php81 /etc/php81 /usr/share/php81
+
+CMD ["/setup.sh"]

@@ -1,0 +1,34 @@
+FROM alpine:3.18
+
+EXPOSE 3306
+
+### Get the latest packages
+RUN apk update && apk upgrade
+
+### Install the necessary packages
+RUN apk add --no-cache bash
+RUN apk add --no-cache openrc
+RUN apk add --no-cache mariadb mariadb-client mariadb-common
+
+RUN openrc
+RUN touch /run/openrc/softlevel # So it STFU
+
+RUN apk add --no-cache procps
+RUN apk add --no-cache less nano
+
+### Create the necessary directories and add configuration files
+RUN mkdir -p /run/mysqld
+RUN chown -R mysql:mysql /run/mysqld
+RUN chmod 775 /run/mysqld
+
+RUN mkdir -p /var/lib/mysql/log && chown -R mysql:mysql /var/lib/mysql/log && chmod 775 /var/lib/mysql/log
+
+
+COPY ./conf/my.cnf /etc/mysql/my.cnf
+
+### Script to start the service and create the database
+COPY ./tools/setup.sh /tmp/
+RUN chmod +x /tmp/setup.sh
+CMD ["/tmp/setup.sh"]
+
+

@@ -1,0 +1,105 @@
+# Create a  bridge network "inception" for all containers to communicate with each other
+# Create local volumes for wordpress and mariadb services
+# SERVICES: Nginx, Wordpress, MariaDB, reddis, adminer, ftp server
+# Volumes: wordpress, mariadb
+# Networks: inception
+# Ports: 443, 3306, 8080, 21, 20, 12000
+# Images will be built from the Dockerfile in ./requiremenmts/%service_name% directory
+# Add healthcheck for all services
+# Add restart unless-stopped policy for all services
+# Forward environment variables to the services, these will be public data for easier configuration (Domain name etc...,) credentials will be stored in docker secrets
+# Each service will have a shared and individual configuration file
+
+### ### ### ### ### ### ###
+### Docker-compose.yaml ###
+### ### ### ### ### ### ###
+
+version: '3.8'
+
+# Define services
+
+services:
+
+  ### Mariadb
+  mariadb:
+    build: ./requirements/mariadb
+    container_name: mariadb
+    restart: "no" #unless-stopped
+    volumes:
+      - mariadb:/var/lib/mysql
+    networks:
+      - inception
+    ports:
+      - "3306"
+    env_file: .env
+    # healthcheck:
+    #   test: ["CMD", "test", "-f", "/tmp/healthcheck"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 5/var/lib/mysql/243c035a252e.err
+    #   start_period: 5s
+
+  # Wordpress
+  wordpress:
+    build: ./requirements/wordpress
+    container_name: wordpress
+    depends_on:
+      - "mariadb"
+        # condition: service_healthy
+    restart: "no" #unless-stopped
+    volumes:
+      - wordpress:/var/www/wordpress
+    networks:
+      - inception
+    ports:
+      - "9000"
+    env_file:
+      - .env
+    # healthcheck:
+    #   test: ["CMD", "test", "-f", "/tmp/healthcheck"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 5
+    #   start_period: 5s
+
+  # ### Nginx
+  nginx:
+    build:
+      context: ./requirements/nginx
+      args:
+        - OPEN_SSL_SUBJ=${OPEN_SSL_SUBJ}
+    container_name: nginx
+    depends_on:
+      - wordpress
+    volumes:
+      - wordpress:/var/www/wordpress
+    restart: "no" #unless-stopped
+    ports:
+      - "443:443"
+    networks:
+      - inception
+
+### Volumes
+volumes:
+  wordpress:
+    name: wordpress
+    driver: local
+    driver_opts:
+      device: /home/myos/data/wordpress
+      o: bind
+      type: none
+
+  mariadb:
+    name: mariadb
+    driver: local
+    driver_opts:
+      device: /home/myos/data/mariadb
+      o: bind
+      type: none
+
+### Networks
+
+networks:
+  inception:
+    name: inception
+    driver: bridge
