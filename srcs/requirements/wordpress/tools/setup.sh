@@ -2,21 +2,28 @@
 
 sleep 2
 
-if [ ! -f "/var/www/wordpress/wp-config.php" ]
+if [ ! -f "/var/www/wordpress/done-setup" ]
 then
 
-	echo "|=======> Wordpress: Downloading core"
-
-	wp-cli core download --allow-root --path=/var/www/wordpress
-
+	# echo "|=======> Wordpress: Downloading core"
 	cd /var/www/wordpress
-	mkdir -p /var/www/wordpress/log/
-	echo "|=======> Wordpress: Creating wp-config.php"
-	wp-cli config create --allow-root \
-		--dbname=$DB_NAME \
-		--dbuser=$MYSQL_USER_NAME \
-		--dbpass=$MYSQL_USER_PASSWORD \
-		--dbhost=mariadb:3306 \
+
+# 	echo "|=======> Wordpress: Creating wp-config.php"
+# 	wp-cli config create --allow-root \
+# 		--dbname=$DB_NAME \
+# 		--dbuser=$MYSQL_USER_NAME \
+# 		--dbpass=$MYSQL_USER_PASSWORD \
+# 		--dbhost=mariadb:3306
+
+# 	sed -i 's/define( 'WP_DEBUG', false/define( 'WP_DEBUG', true/g' /var/www/wordpress/wp-config.php
+
+# 	echo "\
+# define('WP_DEBUG_LOG', true);
+# define('WP_DEBUG_DISPLAY', true);
+# define('WP_CACHE', true);
+# define('WP_REDIS_HOST', 'redis');
+# define('WP_REDIS_PORT', 6379); "\
+# 		>> "/var/www/wordpress/wp-config.php"
 
 	echo "|=======> Wordpress: Installing core"
 	wp-cli  core install --allow-root \
@@ -26,15 +33,22 @@ then
 		--admin_email=$WP_ADMIN_EMAIL \
 		--url=$DOMAIN_NAME
 
-
 	echo "|=======> Wordpress: Add user"
 	wp-cli user create --allow-root \
 		$WP_USER_NAME \
 		$WP_USER_EMAIL \
 		--user_pass=$WP_USER_PASSWORD
 
+	echo "|=======> Wordpress: Installing redis plugin"
+	wp-cli --allow-root plugin install redis-cache --activate
+
+	echo "|=======> Wordpress: Starting redis plugin"
+	wp-cli --allow-root redis enable
+
+	touch done-setup
+
 	chown -R www-data:www-data /var/www/wordpress/
-	chmod -R 750 /var/www/wordpress/
+	chmod -R 764 /var/www/wordpress/
 
 fi
 

@@ -16,53 +16,43 @@
 
 version: '3.8'
 
-# Define services
+#################################################
+#~~~~~~~SERVICES
+#################################################
+#################################################
+
 
 services:
 
-  ### Mariadb
   mariadb:
     build: ./requirements/mariadb
     container_name: mariadb
-    restart: "no" #unless-stopped
+    restart: "unless-stopped"
     volumes:
       - mariadb:/var/lib/mysql
     networks:
       - inception
-    ports:
-      - "3306"
     env_file: .env
-    # healthcheck:
-    #   test: ["CMD", "test", "-f", "/tmp/healthcheck"]
-    #   interval: 30s
-    #   timeout: 10s
-    #   retries: 5/var/lib/mysql/243c035a252e.err
-    #   start_period: 5s
+    healthcheck:
+      test: ["CMD-SHELL", "find /tmp/healthcheck -mmin -1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
-  # Wordpress
   wordpress:
     build: ./requirements/wordpress
     container_name: wordpress
     depends_on:
-      - "mariadb"
-        # condition: service_healthy
-    restart: "no" #unless-stopped
+      mariadb:
+        condition: service_healthy
+    restart: "unless-stopped"
     volumes:
       - wordpress:/var/www/wordpress
     networks:
       - inception
-    ports:
-      - "9000"
     env_file:
       - .env
-    # healthcheck:
-    #   test: ["CMD", "test", "-f", "/tmp/healthcheck"]
-    #   interval: 30s
-    #   timeout: 10s
-    #   retries: 5
-    #   start_period: 5s
 
-  # ### Nginx
   nginx:
     build:
       context: ./requirements/nginx
@@ -71,15 +61,83 @@ services:
     container_name: nginx
     depends_on:
       - wordpress
+      - bonus_site
     volumes:
       - wordpress:/var/www/wordpress
-    restart: "no" #unless-stopped
+    restart: "unless-stopped"
     ports:
       - "443:443"
     networks:
       - inception
 
-### Volumes
+  redis:
+    build: ./requirements/bonus/redis
+    container_name: redis
+    depends_on:
+      - wordpress
+    restart: "unless-stopped"
+    ports:
+      - "6379:6379"
+    networks:
+      - inception
+    env_file:
+      - .env
+
+  bonus_site:
+    build:
+      context: ./requirements/bonus/bonus_site
+      args:
+        - OPEN_SSL_SUBJ=${OPEN_SSL_SUBJ}
+    container_name: bonus_site
+    volumes:
+      - bonus_site:/var/www/site
+    restart: "unless-stopped"
+    ports:
+      - "4343"
+    networks:
+      - inception
+    env_file:
+      - .env
+
+  # adminer:
+  #   build: ./requirements/bonus/adminer
+  #   container_name: adminer
+  #   depends_on:
+  #     mariadb:
+  #       condition: service_healthy
+  #   restart: "unless-stopped"
+  #   ports:
+  #     - "8080:8080" # Link to external port for remote db management
+  #   networks:
+  #     - inception
+  #   env_file:
+  #     - .env
+
+  # ftp:
+  #   build:
+  #     context: ./requirements/bonus/ftp
+  #     args:
+  #       - OPEN_SSL_SUBJ=${OPEN_SSL_SUBJ}
+  #   container_name: ftp
+  #   restart: "unless-stopped"
+  #   volumes:
+  #     - wordpress:/var/www/wordpress
+  #   ports:
+  #     - "21:21" # FTP port, for client communication
+  #     - "20:20" # Active mode, for server response
+  #     - "12000-12010:12000-12010" # Passive mode, range of ports outside of the default range
+  #   networks:
+  #     - inception
+  #   env_file:
+  #     - .env
+
+
+
+#################################################
+#~~~~~~~VOLUMES
+#################################################
+#################################################
+
 volumes:
   wordpress:
     name: wordpress
@@ -97,7 +155,19 @@ volumes:
       o: bind
       type: none
 
-### Networks
+  bonus_site:
+    name: bonus_site
+    driver: local
+    driver_opts:
+      device: /home/myos/data/bonus_site
+      o: bind
+      type: none
+
+
+#################################################
+#~~~~~~~Network
+#################################################
+#################################################
 
 networks:
   inception:

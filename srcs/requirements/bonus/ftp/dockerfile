@@ -1,0 +1,19 @@
+FROM alpine:3.18
+
+ARG OPEN_SSL_SUBJ
+
+EXPOSE 21 20 21000-21010
+
+RUN apk update && apk upgrade
+RUN apk add --no-cache bash
+RUN apk add --no-cache openssl
+RUN apk add --no-cache vsftpd
+
+RUN adduser -D -G 'www-data' "www-data"
+
+COPY ./conf/vsftpd.conf /etc/vsftpd/vsftpd.conf
+
+COPY ./tools/setup.sh /tmp/setup.sh
+RUN chmod +x /tmp/setup.sh
+
+CMD ["/tmp/setup.sh"]

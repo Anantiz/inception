@@ -36,9 +36,10 @@ if [ ! -d "/var/lib/mysql/$DB_NAME" ]; then
 fi
 
 sed -i 's/skip-networking/# skip-networking/g' /etc/my.cnf.d/mariadb-server.cnf
-# Stop the MariaDB service if for some reason it is still running
-rc-service mariadb stop
 
+# Stop the MariaDB service if for some reason it is still running in background
+rc-service mariadb restart
+rc-service mariadb stop
 sleep 2
 
 ### Start in foreground if there was no error
@@ -46,7 +47,7 @@ sleep 2
 if [ -d "/var/lib/mysql/$DB_NAME" ]; then # If no database was created in the previous step then exit
 	echo "|=======> Starting Database $DB_NAME in foreground"
 	touch /tmp/healthcheck
-	exec /usr/bin/mariadbd-safe --basedir=/usr --datadir=/var/lib/mysql --user=mysql --pid-file=/run/mysqld/mariadb.pid
+	exec /usr/bin/mariadbd --basedir=/usr --datadir=/var/lib/mysql --user=mysql --pid-file=/run/mysqld/mariadb.pid
 else
 	echo "|=======> Error: Database not created"
 	rm -f /tmp/healthcheck

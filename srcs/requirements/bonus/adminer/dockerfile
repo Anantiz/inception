@@ -1,0 +1,19 @@
+FROM alpine:3.18
+
+EXPOSE 8080
+
+RUN apk update && apk upgrade
+
+RUN apk add --no-cache php-phar mariadb-client php81-common php81-iconv php81-json php81-gd php81-curl php81-xml \
+php81-mysqli php81-imap php81-cgi fcgi php81-pdo php81-pdo_mysql php81-soap php81-opcache \
+php81-posix php81-gettext php81-ldap php81-ctype php81-dom php81 php81-fpm
+
+RUN apk add --no-cache bash
+RUN apk add --no-cache curl
+
+RUN mkdir -p /var/www
+RUN curl -Lo /var/www/adminer.php https://github.com/vrana/adminer/releases/download/v4.8.1/adminer-4.8.1-mysql-en.php
+RUN chmod 664 /var/www/adminer.php
+
+# Run PHP server, binding to all interfaces on port 8080, serving files from /var/www (Adminer is there)
+CMD ["php", "-S", "0.0.0.0:8080", "-t", "/var/www/"]

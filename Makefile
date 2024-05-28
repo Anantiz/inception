@@ -1,16 +1,16 @@
-up: | build
+up:
 	@docker-compose -f srcs/docker-compose.yaml up
 
 build:
-	mkdir -p /home/myos/data/mariadb /home/myos/data/wordpress
+	mkdir -p /home/myos/data/mariadb /home/myos/data/wordpress /home/myos/data/bonus_site
 	docker-compose -f srcs/docker-compose.yaml build
 
 down:
 	@docker-compose -f srcs/docker-compose.yaml down
 
 clean: down
-	@docker system prune -f
-	sudo rm -rf /home/myos/data/mariadb /home/myos/data/wordpress
+	# @docker system prune -f
+	sudo rm -rf /home/myos/data/mariadb /home/myos/data/wordpress /home/myos/data/bonus_site
 
 re: clean build up
 

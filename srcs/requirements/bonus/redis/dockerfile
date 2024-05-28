@@ -1,0 +1,11 @@
+FROM alpine:3.18
+
+EXPOSE 6379
+
+RUN apk update && apk upgrade
+RUN apk add --no-cache bash
+RUN apk add --no-cache redis
+
+COPY ./conf/redis.conf /etc/redis.conf
+
+CMD ["redis-server", "/etc/redis.conf"]

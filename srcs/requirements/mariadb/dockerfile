@@ -24,7 +24,7 @@ RUN chmod 775 /run/mysqld
 RUN mkdir -p /var/lib/mysql/log && chown -R mysql:mysql /var/lib/mysql/log && chmod 775 /var/lib/mysql/log
 
 
-COPY ./conf/my.cnf /etc/mysql/my.cnf
+# COPY ./conf/my.cnf /etc/mysql/my.cnf
 
 ### Script to start the service and create the database
 COPY ./tools/setup.sh /tmp/
