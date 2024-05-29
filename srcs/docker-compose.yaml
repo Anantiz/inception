@@ -113,23 +113,24 @@ services:
   #   env_file:
   #     - .env
 
-  # ftp:
-  #   build:
-  #     context: ./requirements/bonus/ftp
-  #     args:
-  #       - OPEN_SSL_SUBJ=${OPEN_SSL_SUBJ}
-  #   container_name: ftp
-  #   restart: "unless-stopped"
-  #   volumes:
-  #     - wordpress:/var/www/wordpress
-  #   ports:
-  #     - "21:21" # FTP port, for client communication
-  #     - "20:20" # Active mode, for server response
-  #     - "12000-12010:12000-12010" # Passive mode, range of ports outside of the default range
-  #   networks:
-  #     - inception
-  #   env_file:
-  #     - .env
+  ftp:
+    build:
+      context: ./requirements/bonus/ftp
+      args:
+        - OPEN_SSL_SUBJ=${OPEN_SSL_SUBJ}
+        - FTP_USER_PASSWORD=${FTP_USER_PASSWORD}
+    container_name: ftp
+    restart: "unless-stopped"
+    volumes:
+      - wordpress:/var/www/wordpress
+    ports:
+      - "20:20" # Active mode, for server response
+      - "21:21" # FTP port, for client communication
+      - "21000-21010:21000-21010" # Passive mode, range of ports outside of the default range
+    networks:
+      - inception
+    env_file:
+      - .env
 
 
 

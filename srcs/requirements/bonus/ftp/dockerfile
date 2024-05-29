@@ -1,19 +1,38 @@
 FROM alpine:3.18
 
 ARG OPEN_SSL_SUBJ
+ARG FTP_USER_PASSWORD
 
-EXPOSE 21 20 21000-21010
+# Apparently these are useless too
+# EXPOSE 21 20 21000-21010
 
 RUN apk update && apk upgrade
 RUN apk add --no-cache bash
 RUN apk add --no-cache openssl
 RUN apk add --no-cache vsftpd
 
-RUN adduser -D -G 'www-data' "www-data"
+# RUN adduser -D -G 'www-data' "www-data" --shell /bin/bash
+# RUN echo "www-data:$(openssl passwd -1 "${FTP_USER_PASSWORD}")" | chpasswd -e
+
+# Cuz funily enough, my own logically thought out config never works but stupid copy-pasta of pregenerated config always works
+RUN adduser -D "www-data" -G 'www-data' --shell /bin/bash && echo "www-data":${FTP_USER_PASSWORD} | chpasswd
+RUN # Change owner to home directory
+RUN chown -R "www-data":"www-data" /home/www-data
+
 
 COPY ./conf/vsftpd.conf /etc/vsftpd/vsftpd.conf
+# COPY ./conf/vsftpduserlist.conf /etc/vsftpd/vsftpduserlist.conf
 
-COPY ./tools/setup.sh /tmp/setup.sh
-RUN chmod +x /tmp/setup.sh
 
-CMD ["/tmp/setup.sh"]
+# COPY ./tools/setup.sh /setup.sh
+# RUN chmod +x /setup.sh
+
+# CMD ["/setup.sh"]
+
+RUN mkdir -p /etc/certs
+RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+	-keyout /etc/certs/vsftpd.key \
+	-out /etc/certs/vsftpd.crt \
+	-subj ${OPEN_SSL_SUBJ} 2> /dev/null
+
+CMD ["vsftpd", "/etc/vsftpd/vsftpd.conf"]

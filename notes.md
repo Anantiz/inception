@@ -1,4 +1,4 @@
 OK ! | SECOND SERVER FIRST
 OK ! | REDDIS
-Nil  | ADMINER
-Nil  | FTP
+Nil  | ADMINER	// WTF IS THIS
+OK!  | FTP
