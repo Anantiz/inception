@@ -26,6 +26,7 @@ COPY ./conf/err404.html /var/www/site/err404.html
 COPY ./conf/err404.css /var/www/site/err404.css
 COPY ./conf/index.html /var/www/site/index.html
 COPY ./conf/style.css /var/www/site/style.css
+COPY ./conf/danger.jpeg /var/www/site/danger.jpg
 
 RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
 	-keyout /var/nginx/ssl/nginx.key \

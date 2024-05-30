@@ -99,19 +99,19 @@ services:
     env_file:
       - .env
 
-  # adminer:
-  #   build: ./requirements/bonus/adminer
-  #   container_name: adminer
-  #   depends_on:
-  #     mariadb:
-  #       condition: service_healthy
-  #   restart: "unless-stopped"
-  #   ports:
-  #     - "8080:8080" # Link to external port for remote db management
-  #   networks:
-  #     - inception
-  #   env_file:
-  #     - .env
+  adminer:
+    build: ./requirements/bonus/adminer
+    container_name: adminer
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    restart: "unless-stopped"
+    ports:
+      - "3133:3133" # Link to external port for remote db management
+    networks:
+      - inception
+    env_file:
+      - .env
 
   ftp:
     build:
@@ -131,6 +131,9 @@ services:
       - inception
     env_file:
       - .env
+
+    cadvisor:
+      build: ./requirements/cadvisor
 
 
 
