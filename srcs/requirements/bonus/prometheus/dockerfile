@@ -1,0 +1,20 @@
+FROM alpine:3.18
+
+EXPOSE 9090
+
+RUN apk update && apk upgrade
+RUN apk add --no-cache bash
+RUN apk add --no-cache curl
+
+### Install dependencies
+RUN apk add --no-cache go npm nodejs
+
+### Install prometheus
+RUN mkdir -p /prometheus
+RUN curl -Lo /prometheus/prometheus.tar https://github.com/prometheus/prometheus/releases/download/v2.52.0/prometheus-2.52.0.linux-amd64.tar.gz
+RUN tar -xvf /prometheus/prometheus.tar -C /prometheus/ && rm /prometheus/prometheus.tar
+RUN mv /prometheus/prometheus-2.52.0.linux-amd64/* /prometheus/ && rm -r /prometheus/prometheus-2.52.0.linux-amd64
+
+COPY ./conf/prometheus.yml /prometheus/prometheus.yml
+
+CMD ["/prometheus/prometheus", "--config.file=/prometheus/prometheus.yml"]

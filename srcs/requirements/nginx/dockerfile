@@ -1,6 +1,7 @@
 FROM alpine:3.18
 
-EXPOSE 443
+# It's ok to expose 80 here because it will only be for intra-container communication, outside conection will only be allowed through 443 (TLS)
+EXPOSE 443 80
 
 ARG OPEN_SSL_SUBJ
 
@@ -38,6 +39,5 @@ RUN chown -R www-data:www-data /var/lib/nginx && chmod -R 760 /var/lib/nginx
 RUN chown -R www-data:www-data /var/log/nginx /etc/nginx /usr/share/nginx
 RUN chown -R www-data:www-data /run/nginx/ && chmod -R 760 /run/nginx/
 USER www-data
-
 
 CMD ["nginx", "-g", "daemon off;"]

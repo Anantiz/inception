@@ -35,9 +35,10 @@ services:
     env_file: .env
     healthcheck:
       test: ["CMD-SHELL", "find /tmp/healthcheck -mmin -1"]
-      interval: 10s
+      interval: 15s
       timeout: 5s
       retries: 3
+      start_period: 15s
 
   wordpress:
     build: ./requirements/wordpress
@@ -60,8 +61,12 @@ services:
         - OPEN_SSL_SUBJ=${OPEN_SSL_SUBJ}
     container_name: nginx
     depends_on:
-      - wordpress
-      - bonus_site
+      wordpress:
+        condition: service_started
+      bonus_site:
+        condition: service_started
+      nginx_scraper:
+        condition: service_started
     volumes:
       - wordpress:/var/www/wordpress
     restart: "unless-stopped"
@@ -69,6 +74,12 @@ services:
       - "443:443"
     networks:
       - inception
+    healthcheck:
+      test: ["CMD-SHELL", "ping -c 1 localhost"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   redis:
     build: ./requirements/bonus/redis
@@ -132,10 +143,25 @@ services:
     env_file:
       - .env
 
-    cadvisor:
-      build: ./requirements/cadvisor
+  prometheus:
+    build: ./requirements/bonus/prometheus
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - inception
+    restart: "unless-stopped"
+    volumes:
+      - prometheus:/prometheus
 
-
+  nginx_scraper:
+    build: ./requirements/bonus/nginx_scraper
+    container_name: nginx_scraper
+    restart: "unless-stopped"
+    networks:
+      - inception
+    ports:
+      - "4242:4242"
 
 #################################################
 #~~~~~~~VOLUMES
@@ -164,6 +190,15 @@ volumes:
     driver: local
     driver_opts:
       device: /home/myos/data/bonus_site
+      o: bind
+      type: none
+
+  # Technically not a requirement, but still useful to keep the data long term
+  prometheus:
+    name: prometheus
+    driver: local
+    driver_opts:
+      device: /home/myos/data/prometheus
       o: bind
       type: none
 

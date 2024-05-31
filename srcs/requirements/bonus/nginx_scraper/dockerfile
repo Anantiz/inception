@@ -1,0 +1,26 @@
+FROM alpine:3.18
+
+EXPOSE 4242
+
+RUN apk update && apk upgrade
+RUN apk add --no-cache bash
+RUN apk add --no-cache curl
+
+### Install dependencies and tools
+RUN apk add --no-cache git build-base ca-certificates && update-ca-certificates
+
+### Install Go (Cuz package is not latest version through apk)
+RUN mkdir -p /go_tar
+RUN curl -Lo /go_tar/go.tar.gz https://go.dev/dl/go1.22.3.linux-amd64.tar.gz
+RUN tar -xzf /go_tar/go.tar.gz && rm -rf /go_tar
+
+RUN mkdir -p /nginx_prometheus_exporter
+RUN git clone https://github.com/nginxinc/nginx-prometheus-exporter.git /nginx_prometheus_exporter
+
+### Compile that shit
+RUN /go/bin/go build -C /nginx_prometheus_exporter -o /bin/nginx_prometheus_exporter
+
+### Remove useless things afterwards
+RUN apk del git build-base && rm -rf /go /var/cache/apk/*
+
+CMD ["/bin/nginx_prometheus_exporter", "--nginx.scrape-uri=http://nginx:80/stub_status", "--log.level=debug"]

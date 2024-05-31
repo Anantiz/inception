@@ -2,7 +2,7 @@ up:
 	@docker-compose -f srcs/docker-compose.yaml up
 
 build:
-	mkdir -p /home/myos/data/mariadb /home/myos/data/wordpress /home/myos/data/bonus_site
+	mkdir -p /home/myos/data/mariadb /home/myos/data/wordpress /home/myos/data/bonus_site /home/myos/data/prometheus
 	docker-compose -f srcs/docker-compose.yaml build
 
 down:
